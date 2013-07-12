@@ -14,7 +14,6 @@ try:
 except ImportError:
     pass
 
-from fuel_health.common import network_common as net_common
 from fuel_health.common import ssh
 from fuel_health.common.utils.data_utils import rand_name
 from fuel_health import exceptions
