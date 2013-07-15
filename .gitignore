@@ -1,4 +1,4 @@
 .idea
 *.egg-info
-dist
 *.pyc
+*.gitignore
