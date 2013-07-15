@@ -21,7 +21,6 @@ import sys
 from oslo.config import cfg
 
 from fuel_health.common import log as logging
-from fuel_health.common.utils.misc import singleton
 import requests
 
 LOG = logging.getLogger(__name__)
@@ -37,7 +36,7 @@ IdentityGroup = [
                 default=False,
                 help="Set to True if using self-signed SSL certificates."),
     cfg.StrOpt('uri',
-               default=None,
+               default='http://10.0.0.2/',
                help="Full URI of the OpenStack Identity API (Keystone), v2"),
     cfg.StrOpt('url',
                default='http://10.0.0.1/',
@@ -366,135 +365,22 @@ OrchestrationGroup = [
                help="Name of existing keypair to launch servers with."),
 ]
 
-<<<<<<< HEAD
-
-smoke_group = cfg.OptGroup(name='smoke',
-                             title='Smoke Tests Options')
-
-SmokeGroup = [
-    cfg.BoolOpt('allow_tenant_isolation',
-                default=False,
-                help="Allows test cases to create/destroy tenants and "
-                     "users. This option enables isolated test cases and "
-                     "better parallel execution, but also requires that "
-                     "OpenStack Identity API admin credentials are known."),
-    cfg.BoolOpt('allow_tenant_reuse',
-                default=True,
-                help="If allow_tenant_isolation is True and a tenant that "
-                     "would be created for a given test already exists (such "
-                     "as from a previously-failed run), re-use that tenant "
-                     "instead of failing because of the conflict. Note that "
-                     "this would result in the tenant being deleted at the "
-                     "end of a subsequent successful run."),
-    cfg.StrOpt('image_ref',
-               default="{$IMAGE_ID}",
-               help="Valid secondary image reference to be used in tests."),
-    cfg.StrOpt('image_ref_alt',
-               default="{$IMAGE_ID_ALT}",
-               help="Valid secondary image reference to be used in tests."),
-    cfg.IntOpt('flavor_ref',
-               default=1,
-               help="Valid primary flavor to use in tests."),
-    cfg.IntOpt('flavor_ref_alt',
-               default=2,
-               help='Valid secondary flavor to be used in tests.'),
-    cfg.StrOpt('image_ssh_user',
-               default="root",
-               help="User name used to authenticate to an instance."),
-    cfg.StrOpt('image_alt_ssh_user',
-               default="root",
-               help="User name used to authenticate to an instance using "
-                    "the alternate image."),
-    cfg.BoolOpt('resize_available',
-                default=False,
-                help="Does the test environment support resizing?"),
-    cfg.BoolOpt('live_migration_available',
-                default=False,
-                help="Does the test environment support live migration "
-                     "available?"),
-    cfg.BoolOpt('use_block_migration_for_live_migration',
-                default=False,
-                help="Does the test environment use block devices for live "
-                     "migration"),
-    cfg.BoolOpt('block_migrate_supports_cinder_iscsi',
-                default=False,
-                help="Does the test environment block migration support "
-                     "cinder iSCSI volumes"),
-    cfg.BoolOpt('change_password_available',
-                default=False,
-                help="Does the test environment support changing the admin "
-                     "password?"),
-    cfg.BoolOpt('create_image_enabled',
-                default=False,
-                help="Does the test environment support snapshots?"),
-    cfg.IntOpt('build_interval',
-               default=10,
-               help="Time in seconds between build status checks."),
-    cfg.IntOpt('build_timeout',
-               default=300,
-               help="Timeout in seconds to wait for an instance to build."),
-    cfg.BoolOpt('run_ssh',
-                default=False,
-                help="Does the test environment support snapshots?"),
-    cfg.StrOpt('ssh_user',
-               default='root',
-               help="User name used to authenticate to an instance."),
-    cfg.IntOpt('ssh_timeout',
-               default=300,
-               help="Timeout in seconds to wait for authentication to "
-                    "succeed."),
-    cfg.IntOpt('ssh_channel_timeout',
-               default=60,
-               help="Timeout in seconds to wait for output from ssh "
-                    "channel."),
-    cfg.StrOpt('fixed_network_name',
-               default='private',
-               help="Visible fixed network name "),
-    cfg.StrOpt('network_for_ssh',
-               default='public',
-               help="Network used for SSH connections."),
-    cfg.IntOpt('ip_version_for_ssh',
-               default=4,
-               help="IP version used for SSH connections."),
-    cfg.StrOpt('catalog_type',
-               default='compute',
-               help="Catalog type of the Compute service."),
-    cfg.StrOpt('path_to_private_key',
-               default=None,
-               help="Path to a private key file for SSH access to remote "
-                    "hosts"),
-    cfg.BoolOpt('disk_config_enabled_override',
-                default=True,
-                help="If false, skip config tests regardless of the "
-                     "extension status"),
-]
-
-
-def register_smoke_opts(conf):
-    conf.register_group(smoke_group)
-    for opt in SmokeGroup:
-        conf.register_opt(opt, group='smoke')
-
 
 def process_singleton(cls):
     """Wrapper for classes... To be instantiated only one time per process"""
     instances = {}
+
     def wrapper(*args, **kwargs):
-=======
-class Singleton(object):
-
-    _instances = {}
-
-    def __new__(cls, *args, **kwargs):
->>>>>>> Removed unnecessary params from OSTF configuration.
         pid = os.getpid()
         if pid not in instances:
             instances[pid] = cls(*args, **kwargs)
         return instances[pid]
+
     return wrapper
 
+
 @process_singleton
-class FuelConfig(object):
+class FileConfig(object):
     """Provides OpenStack configuration information."""
 
     DEFAULT_CONFIG_DIR = os.path.join(os.path.abspath(
@@ -543,14 +429,7 @@ class FuelConfig(object):
         self.identity = cfg.CONF.identity
         self.network = cfg.CONF.network
         self.volume = cfg.CONF.volume
-<<<<<<< HEAD
-        self.compute_admin = cfg.CONF['compute-admin']
-        self.smoke = cfg.CONF.smoke
-        if not self.compute_admin.username:
-            self.compute_admin.username = self.identity.admin_username
-            self.compute_admin.password = self.identity.admin_password
-            self.compute_admin.tenant_name = self.identity.admin_tenant_name
-
+     
 
 class ConfigGroup(object):
   # USE SLOTS
@@ -583,15 +462,14 @@ class NailgunConfig(object):
 
     identity = ConfigGroup(IdentityGroup)
     compute = ConfigGroup(ComputeGroup)
-    smoke = ConfigGroup(SmokeGroup)
     orchestration = ConfigGroup(OrchestrationGroup)
-    compute_admin = ConfigGroup(ComputeAdminGroup)
     image = ConfigGroup(ImageGroup)
     network = ConfigGroup(NetworkGroup)
     volume = ConfigGroup(VolumeGroup)
     object_storage = ConfigGroup(ObjectStoreConfig)
 
     def __init__(self, parse=True):
+        LOG.info('INITIALIZING NAILGUN CONFIG')
         self.nailgun_host = os.environ.get('NAILGUN_HOST', None)
         self.nailgun_port = os.environ.get('NAILGUN_PORT', None)
         self.nailgun_url = 'http://{0}:{1}'.format(self.nailgun_host,
@@ -738,10 +616,8 @@ class NailgunConfig(object):
         self.network.raw_data = data
 
 
-def Config():
+def FuelConfig():
     if all(item in os.environ for item in
            ('NAILGUN_HOST', 'NAILGUN_PORT', 'CLUSTER_ID')):
         return NailgunConfig()
-    return FuelConfig()
-=======
->>>>>>> Removed unnecessary params from OSTF configuration.
+    return FileConfig()
