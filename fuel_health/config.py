@@ -201,17 +201,11 @@ ComputeGroup = [
                default='',
                help="path to ssh key"),
     cfg.StrOpt('image_name',
-               default="{$IMAGE_ID}",
-               help="Valid secondary image reference to be used in tests."),
-    cfg.StrOpt('image_ref_alt',
-               default="{$IMAGE_ID_ALT}",
+               default="cirros-0.3.0-x86_64",
                help="Valid secondary image reference to be used in tests."),
     cfg.IntOpt('flavor_ref',
                default=1,
-               help="Valid primary flavor to use in tests."),
-    cfg.IntOpt('flavor_ref_alt',
-               default=2,
-               help='Valid secondary flavor to be used in tests.'),
+               help="Valid primary flavor to use in tests.")
 
 ]
 
@@ -221,28 +215,6 @@ def register_compute_opts(conf):
     for opt in ComputeGroup:
         conf.register_opt(opt, group='compute')
 
-compute_admin_group = cfg.OptGroup(name='compute-admin',
-                                   title="Compute Admin Options")
-
-ComputeAdminGroup = [
-    cfg.StrOpt('username',
-               default='admin',
-               help="Administrative Username to use for Nova API requests."),
-    cfg.StrOpt('tenant_name',
-               default='admin',
-               help="Administrative Tenant name to use for Nova API "
-                    "requests."),
-    cfg.StrOpt('password',
-               default='pass',
-               help="API key to use when authenticating as admin.",
-               secret=True),
-]
-
-
-def register_compute_admin_opts(conf):
-    conf.register_group(compute_admin_group)
-    for opt in ComputeAdminGroup:
-        conf.register_opt(opt, group='compute-admin')
 
 image_group = cfg.OptGroup(name='image',
                            title="Image Service Options")
@@ -394,6 +366,7 @@ OrchestrationGroup = [
                help="Name of existing keypair to launch servers with."),
 ]
 
+<<<<<<< HEAD
 
 smoke_group = cfg.OptGroup(name='smoke',
                              title='Smoke Tests Options')
@@ -507,6 +480,13 @@ def process_singleton(cls):
     """Wrapper for classes... To be instantiated only one time per process"""
     instances = {}
     def wrapper(*args, **kwargs):
+=======
+class Singleton(object):
+
+    _instances = {}
+
+    def __new__(cls, *args, **kwargs):
+>>>>>>> Removed unnecessary params from OSTF configuration.
         pid = os.getpid()
         if pid not in instances:
             instances[pid] = cls(*args, **kwargs)
@@ -559,12 +539,11 @@ class FuelConfig(object):
         register_identity_opts(cfg.CONF)
         register_network_opts(cfg.CONF)
         register_volume_opts(cfg.CONF)
-        register_compute_admin_opts(cfg.CONF)
-        register_smoke_opts(cfg.CONF)
         self.compute = cfg.CONF.compute
         self.identity = cfg.CONF.identity
         self.network = cfg.CONF.network
         self.volume = cfg.CONF.volume
+<<<<<<< HEAD
         self.compute_admin = cfg.CONF['compute-admin']
         self.smoke = cfg.CONF.smoke
         if not self.compute_admin.username:
@@ -764,3 +743,5 @@ def Config():
            ('NAILGUN_HOST', 'NAILGUN_PORT', 'CLUSTER_ID')):
         return NailgunConfig()
     return FuelConfig()
+=======
+>>>>>>> Removed unnecessary params from OSTF configuration.
