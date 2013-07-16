@@ -24,11 +24,11 @@ class SanityInfrastructureTest(base.BaseComputeAdminTest):
     @classmethod
     def setUpClass(cls):
         cls.list_of_expected_services = cls.config.compute.enabled_services
-        cls.host = cls.config.compute.controller_node
+        cls.host = cls.config.compute.controller_nodes
         cls.usr = cls.config.compute.controller_node_ssh_user
         cls.pwd = cls.config.compute.controller_node_ssh_password
         cls.key = cls.config.compute.controller_node_ssh_key_path
-        cls.hostname = cls.config.compute.controller_node_name
+        cls.hostname = cls.config.compute.controller_nodes_name
 
     @classmethod
     def tearDownClass(cls):
@@ -39,7 +39,7 @@ class SanityInfrastructureTest(base.BaseComputeAdminTest):
         """Test all of the expected services are on."""
         output_msg = ''
         try:
-            output = SSHClient(self.host, self.usr, self.pwd,
+            output = SSHClient(self.host[0], self.usr, self.pwd,
                                pkey=self.key).exec_command('nova-manage '
                                                            'service list')
         except SSHExecCommandFailed:
@@ -55,10 +55,10 @@ class SanityInfrastructureTest(base.BaseComputeAdminTest):
     @attr(type=['sanity', 'fuel'])
     def test_dns_state(self):
         """Test dns is available."""
-        expected_output = "in-addr.arpa domain name pointer " + self.hostname
+        expected_output = "in-addr.arpa domain name pointer "
         try:
-            output = SSHClient(self.host, self.usr, self.pwd,
-                               pkey=self.key).exec_command("host " + self.host)
+            output = SSHClient(self.host[0], self.usr, self.pwd,
+                               pkey=self.key).exec_command("host " + self.host[0])
         except SSHExecCommandFailed:
             output = "'host' command failed."
         self.assertTrue(expected_output in output,

@@ -131,33 +131,3 @@ class ComputeFuzzClientManager(FuzzClientManager):
         self.quotas_client = QuotasClient(*client_args)
         self.network_client = NetworkClient(*client_args)
         self.hypervisor_client = HypervisorClient(*client_args)
-
-
-class ComputeFuzzClientAltManager(Manager):
-
-    """
-    Manager object that uses the alt_XXX credentials for its
-    managed client objects
-    """
-
-    def __init__(self):
-        conf = fuel_health.config.FuelConfig()
-        super(ComputeFuzzClientAltManager, self).__init__(
-            conf.identity.alt_username,
-            conf.identity.alt_password,
-            conf.identity.alt_tenant_name)
-
-
-class ComputeFuzzClientAdminManager(Manager):
-
-    """
-    Manager object that uses the alt_XXX credentials for its
-    managed client objects
-    """
-
-    def __init__(self):
-        conf = fuel_health.config.FuelConfig()
-        super(ComputeFuzzClientAdminManager, self).__init__(
-            conf.compute_admin.username,
-            conf.compute_admin.password,
-            conf.compute_admin.tenant_name)

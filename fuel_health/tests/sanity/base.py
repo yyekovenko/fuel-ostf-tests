@@ -66,10 +66,6 @@ class BaseComputeTest(fuel_health.test.BaseTestCase):
         admin_client = os.identity_client
         return admin_client
 
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
     def wait_for(self, condition):
         """Repeatedly calls condition() until a timeout."""
         start_time = int(time.time())
@@ -92,16 +88,16 @@ class BaseComputeAdminTest(BaseComputeTest):
     @classmethod
     def setUpClass(cls):
         super(BaseComputeAdminTest, cls).setUpClass()
-        admin_username = cls.config.compute_admin.username
-        admin_password = cls.config.compute_admin.password
-        admin_tenant = cls.config.compute_admin.tenant_name
+        admin_username = cls.config.identity.admin_username
+        admin_password = cls.config.identity.admin_password
+        admin_tenant = cls.config.identity.admin_tenant_name
 
         if not (admin_username and admin_password and admin_tenant):
             msg = ("Missing Compute Admin API credentials "
                    "in configuration.")
             raise cls.skipException(msg)
 
-        cls.os_adm = clients.ComputeAdminManager(interface=cls._interface)
+        cls.os_adm = clients.AdminManager(interface=cls._interface)
 
 
 class BaseIdentityAdminTest(fuel_health.test.BaseTestCase):
