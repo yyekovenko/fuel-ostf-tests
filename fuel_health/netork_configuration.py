@@ -2,10 +2,10 @@ from subprocess import Popen, PIPE
 import requests
 import os
 
-base_uri = os.environ.get('NAILGUN_HOST')
+#base_uri = os.environ.get('NAILGUN_HOST')
 
 os.chdir('/etc/sysconfig/network-scripts/')
-uri = 'http://172.18.164.133:8000/api/'
+uri = 'http://127.0.0.1:8000/api/'
 clusters_ids = []
 network_setting_json = [{}]
 created_vlans_list = []
