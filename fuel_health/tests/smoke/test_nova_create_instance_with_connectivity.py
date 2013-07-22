@@ -13,7 +13,6 @@ class TestNovaNetwork(nmanager.NovaNetworkScenarioTest):
      - security groups creation
      - Network creation
      - Instance creation
-     - Fixed network connectivity verification
      - Floating ip creation
      - Instance connectivity by floating ip
     """
@@ -130,57 +129,6 @@ class TestNovaNetwork(nmanager.NovaNetworkScenarioTest):
         server = self._create_server(self.compute_client,
                                          name, keypair_name, security_groups)
         self.servers.append(server)
-
-    @attr(type=['fuel', 'smoke'])
-    @timed(45.9)
-    def test_006_check_tenant_network_connectivity(self):
-        """Test checks created network connectivity
-        Target component: Nova.
-
-        Scenario:
-            1. Create new keypair (if it`s nonexistent yet).
-            2. Create new sec group (if it`s nonexistent yet).
-            3. Create server with usage of created sec group
-            and keypair.
-            4. Use ping command on newly created server ip.
-        Duration: 40-55 s.
-        """
-        if not self.config.network.tenant_networks_reachable:
-            msg = 'Tenant networks not configured to be reachable.'
-            raise self.skipTest(msg)
-        if not self.servers:
-            if not self.keypairs:
-                try:
-                    self.keypairs[self.tenant_id] = self._create_keypair(
-                        self.compute_client)
-                except Exception:
-                    self.fail("Necessary resources for booting instance"
-                              " has not been created")
-            if not self.security_groups:
-                try:
-                    self.security_groups[self.tenant_id] = \
-                    self._create_security_group(self.compute_client)
-                except Exception:
-                    self.fail("Necessary resources for booting instance"
-                              " has not been created")
-
-            name = rand_name('ost1_test-server-smoke-')
-            keypair_name = self.keypairs[self.tenant_id].name
-            security_groups = [self.security_groups[self.tenant_id].name]
-
-            server = self._create_server(self.compute_client,
-                                         name, keypair_name, security_groups)
-            self.servers.append(server)
-
-        # The target login is assumed to have been configured for
-        # key-based authentication by cloud-init.
-        ssh_login = self.config.compute.image_ssh_user
-        private_key = self.keypairs[self.tenant_id].private_key
-        for server in self.servers:
-            for net_name, ip_addresses in server.networks.iteritems():
-                for ip_address in ip_addresses:
-                    self._check_vm_connectivity(ip_address, ssh_login,
-                                                private_key)
 
     @attr(type=['fuel', 'smoke'])
     @timed(49.9)
