@@ -37,20 +37,15 @@ IdentityGroup = [
                 default=False,
                 help="Set to True if using self-signed SSL certificates."),
     cfg.StrOpt('uri',
-               default='',
+               default='http://localhost:5000/v2.0/',
                help="Full URI of the OpenStack Identity API (Keystone), v2"),
     cfg.StrOpt('url',
-               default='',
+               default='http://localhost/',
                help="Dashboard Openstack url, v2"),
-    cfg.StrOpt('uri_v3',
-               help='Full URI of the OpenStack Identity API (Keystone), v3'),
     cfg.StrOpt('strategy',
                default='keystone',
                help="Which auth method does the environment use? "
                     "(basic|keystone)"),
-    cfg.StrOpt('region',
-               default='RegionOne',
-               help="The identity region name to use."),
     cfg.StrOpt('admin_username',
                default='admin',
                help="Administrative Username to use for"
@@ -76,42 +71,21 @@ compute_group = cfg.OptGroup(name='compute',
                              title='Compute Service Options')
 
 ComputeGroup = [
-    cfg.BoolOpt('allow_tenant_isolation',
-                default=False,
-                help="Allows test cases to create/destroy tenants and "
-                     "users. This option enables isolated test cases and "
-                     "better parallel execution, but also requires that "
-                     "OpenStack Identity API admin credentials are known."),
-    cfg.BoolOpt('allow_tenant_reuse',
-                default=True,
-                help="If allow_tenant_isolation is True and a tenant that "
-                     "would be created for a given test already exists (such "
-                     "as from a previously-failed run), re-use that tenant "
-                     "instead of failing because of the conflict. Note that "
-                     "this would result in the tenant being deleted at the "
-                     "end of a subsequent successful run."),
-    cfg.StrOpt('image_ssh_user',
-               default="root",
-               help="User name used to authenticate to an instance."),
-    cfg.StrOpt('image_alt_ssh_user',
-               default="root",
-               help="User name used to authenticate to an instance using "
-                    "the alternate image."),
-    cfg.BoolOpt('create_image_enabled',
-                default=True,
-                help="Does the test environment support snapshots?"),
+    # cfg.BoolOpt('create_image_enabled',
+    #             default=True,
+    #             help="Does the test environment support snapshots?"),
     cfg.IntOpt('build_interval',
                default=10,
                help="Time in seconds between build status checks."),
     cfg.IntOpt('build_timeout',
                default=160,
                help="Timeout in seconds to wait for an instance to build."),
-    cfg.BoolOpt('run_ssh',
-                default=False,
-                help="Does the test environment support snapshots?"),
-    cfg.StrOpt('ssh_user',
-               default='root',
-               help="User name used to authenticate to an instance."),
+    # cfg.BoolOpt('run_ssh',
+    #             default=False,
+    #             help="Does the test environment support ssh?"),
+    # cfg.StrOpt('ssh_user',
+    #            default='root',
+    #            help="User name used to authenticate to an instance."),
     cfg.IntOpt('ssh_timeout',
                default=50,
                help="Timeout in seconds to wait for authentication to "
@@ -120,9 +94,9 @@ ComputeGroup = [
                default=20,
                help="Timeout in seconds to wait for output from ssh "
                     "channel."),
-    cfg.IntOpt('ip_version_for_ssh',
-               default=4,
-               help="IP version used for SSH connections."),
+    # cfg.IntOpt('ip_version_for_ssh',
+    #            default=4,
+    #            help="IP version used for SSH connections."),
     cfg.StrOpt('catalog_type',
                default='compute',
                help="Catalog type of the Compute service."),
@@ -130,25 +104,15 @@ ComputeGroup = [
                default='/root/.ssh/id_rsa',
                help="Path to a private key file for SSH access to remote "
                     "hosts"),
-    cfg.ListOpt('enabled_services',
-                default=[],
-                help="If false, skip config tests regardless of the "
-                     "extension status"),
     cfg.ListOpt('controller_nodes',
-                default=[],
+                default=['', ],
                 help="IP address of one of the controller nodes"),
-    cfg.ListOpt('controller_nodes_name',
-                default=[],
-                help="DNS name of one of the controller nodes"),
     cfg.StrOpt('controller_node_ssh_user',
                default='root',
                help="ssh user of one of the controller nodes"),
     cfg.StrOpt('controller_node_ssh_password',
                default='r00tme',
                help="ssh user pass of one of the controller nodes"),
-    cfg.StrOpt('controller_node_ssh_key_path',
-               default='/root/.ssh/id_rsa',
-               help="path to ssh key"),
     cfg.StrOpt('image_name',
                default="TestVM",
                help="Valid secondary image reference to be used in tests."),
@@ -167,16 +131,16 @@ image_group = cfg.OptGroup(name='image',
                            title="Image Service Options")
 
 ImageGroup = [
-    cfg.StrOpt('api_version',
-               default='1',
-               help="Version of the API"),
-    cfg.StrOpt('catalog_type',
-               default='image',
-               help='Catalog type of the Image service.'),
-    cfg.StrOpt('http_image',
-               default='http://download.cirros-cloud.net/0.3.1/'
-               'cirros-0.3.1-x86_64-uec.tar.gz',
-               help='http accessable image')
+    # cfg.StrOpt('api_version',
+    #            default='1',
+    #            help="Version of the API"),
+    # cfg.StrOpt('catalog_type',
+    #            default='image',
+    #            help='Catalog type of the Image service.'),
+    # cfg.StrOpt('http_image',
+    #            default='http://download.cirros-cloud.net/0.3.1/'
+    #            'cirros-0.3.1-x86_64-uec.tar.gz',
+    #            help='http accessable image')
 ]
 
 
@@ -196,9 +160,9 @@ NetworkGroup = [
     cfg.StrOpt('tenant_network_cidr',
                default="10.100.0.0/16",
                help="The cidr block to allocate tenant networks from"),
-    cfg.IntOpt('tenant_network_mask_bits',
-               default=29,
-               help="The mask bits for tenant networks"),
+    # cfg.IntOpt('tenant_network_mask_bits',
+    #            default=29,
+    #            help="The mask bits for tenant networks"),
     cfg.BoolOpt('tenant_networks_reachable',
                 default=True,
                 help="Whether tenant network connectivity should be "
@@ -228,15 +192,15 @@ VolumeGroup = [
     cfg.StrOpt('catalog_type',
                default='volume',
                help="Catalog type of the Volume Service"),
-    cfg.BoolOpt('multi_backend_enabled',
-                default=False,
-                help="Runs Cinder multi-backend test (requires 2 backends)"),
-    cfg.StrOpt('backend1_name',
-               default='BACKEND_1',
-               help="Name of the backend1 (must be declared in cinder.conf)"),
-    cfg.StrOpt('backend2_name',
-               default='BACKEND_2',
-               help="Name of the backend2 (must be declared in cinder.conf)"),
+    # cfg.BoolOpt('multi_backend_enabled',
+    #             default=False,
+    #             help="Runs Cinder multi-backend test (requires 2 backends)"),
+    # cfg.StrOpt('backend1_name',
+    #            default='BACKEND_1',
+    #            help="Name of the backend1 (must be declared in cinder.conf)"),
+    # cfg.StrOpt('backend2_name',
+    #            default='BACKEND_2',
+    #            help="Name of the backend2 (must be declared in cinder.conf)"),
 ]
 
 
@@ -253,14 +217,14 @@ ObjectStoreConfig = [
     cfg.StrOpt('catalog_type',
                default='object-store',
                help="Catalog type of the Object-Storage service."),
-    cfg.StrOpt('container_sync_timeout',
-               default=120,
-               help="Number of seconds to time on waiting for a container"
-                    "to container synchronization complete."),
-    cfg.StrOpt('container_sync_interval',
-               default=5,
-               help="Number of seconds to wait while looping to check the"
-                    "status of a container to container synchronization"),
+    # cfg.StrOpt('container_sync_timeout',
+    #            default=120,
+    #            help="Number of seconds to time on waiting for a container"
+    #                 "to container synchronization complete."),
+    # cfg.StrOpt('container_sync_interval',
+    #            default=5,
+    #            help="Number of seconds to wait while looping to check the"
+    #                 "status of a container to container synchronization"),
 ]
 
 
@@ -320,7 +284,7 @@ class FileConfig(object):
 
         if not os.path.exists(path):
             msg = "Config file %(path)s not found" % locals()
-            print >> sys.stderr, RuntimeError(msg)
+            print >> sys.stderr
         else:
             config_files.append(path)
 
