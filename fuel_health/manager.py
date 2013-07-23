@@ -44,7 +44,7 @@ SnapshotsClient = snapshots_client.SnapshotsClientJSON
 QuotasClient = quotas_client.QuotasClientJSON
 HypervisorClient = hypervisor_client.HypervisorClientJSON
 NetworkClient = network_client.QuantumNetworkClient
-if not fuel_health.config.FuelConfig().network.quantum_available:
+if not fuel_health.config.FuelConfig().network.neutron_available:
     NetworkClient = network_client.NovaNetworkClient
 
 LOG = logging.getLogger(__name__)

@@ -154,7 +154,7 @@ class OfficialClientManager(fuel_health.manager.Manager):
         auth_url = self.config.identity.uri
         dscv = self.config.identity.disable_ssl_certificate_validation
 
-        if self.config.network.quantum_available:
+        if self.config.network.neutron_available:
             return quantumclient.v2_0.client.Client(username=username,
                                                 password=password,
                                                 tenant_name=tenant_name,
@@ -233,7 +233,7 @@ class NovaNetworkScenarioTest(OfficialClientTest):
     def check_preconditions(cls):
         cls._create_nano_flavor()
         cls._enabled = True
-        if cls.config.network.quantum_available:
+        if cls.config.network.neutron_available:
             cls._enabled = False
         else:
             cls._enabled = True

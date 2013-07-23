@@ -209,7 +209,7 @@ class Manager(object):
             raise exceptions.InvalidConfiguration(msg)
 
         NetworkClient = QuantumNetworkClient
-        if not self.config.network.quantum_available:
+        if not self.config.network.neutron_available:
             NetworkClient = NovaNetworkClient
         self.network_client = NetworkClient(*client_args)
         self.hosts_client = HostsClientJSON(*client_args)

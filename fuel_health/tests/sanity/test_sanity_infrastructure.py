@@ -25,12 +25,10 @@ class SanityInfrastructureTest(nmanager.SanityChecksTest):
 
     @classmethod
     def setUpClass(cls):
-        cls.list_of_expected_services = cls.config.compute.enabled_services
         cls.host = cls.config.compute.controller_nodes
         cls.usr = cls.config.compute.controller_node_ssh_user
         cls.pwd = cls.config.compute.controller_node_ssh_password
-        cls.key = cls.config.compute.controller_node_ssh_key_path
-        cls.hostname = cls.config.compute.controller_nodes_name
+        cls.key = cls.config.compute.path_to_private_key
         cls.timeout = cls.config.compute.ssh_timeout
 
     @classmethod
@@ -53,7 +51,7 @@ class SanityInfrastructureTest(nmanager.SanityChecksTest):
         """
         output_msg = ''
         cmd = 'nova-manage service list'
-        if len(self.hostname) and len(self.host):
+        if len(self.host):
 
             try:
                 output = SSHClient(self.host[0],
@@ -68,15 +66,12 @@ class SanityInfrastructureTest(nmanager.SanityChecksTest):
                 LOG.debug(exc)
                 self.fail("Step 1 failed: connection fail")
 
-            output_msg = output_msg or (
-                'Some service has not been started:' + str(
-                    self.list_of_expected_services))
+            output_msg = output_msg or 'Some service has not been started.'
             LOG.debug(output)
             self.verify_response_true(u'XXX' not in output, 'Step 3 failed: ' + output_msg)
         else:
-            self.fail('Wrong tests configurations, one from the next '
-                      'parameters are empty controller_node_name or '
-                      'controller_node_ip ')
+            self.fail('Wrong tests configurations: '
+                      'controller_nodes list cannot be empty')
 
     @attr(type=['sanity', 'fuel'])
     @timed(50)
@@ -93,7 +88,7 @@ class SanityInfrastructureTest(nmanager.SanityChecksTest):
                 was successfully resolved.
         Duration: 1-6 s.
         """
-        if len(self.hostname) and len(self.host):
+        if len(self.host):
             expected_output = "in-addr.arpa domain name pointer"
             cmd = "host " + self.host[0]
             output = ''
@@ -114,6 +109,5 @@ class SanityInfrastructureTest(nmanager.SanityChecksTest):
             self.verify_response_true(expected_output in output,
                             'Step 3 failed: DNS name cannot be resolved')
         else:
-            self.fail('Wrong tests configurations, one from the next '
-                      'parameters are empty controller_node_name or '
-                      'controller_node_ip ')
+            self.fail('Wrong tests configurations: '
+                      'controller_nodes list cannot be empty')
