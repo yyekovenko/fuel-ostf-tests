@@ -38,10 +38,10 @@ IdentityGroup = [
                 default=False,
                 help="Set to True if using self-signed SSL certificates."),
     cfg.StrOpt('uri',
-               default='http://localhost:5000/v2.0/',
+               default='http://192.168.56.103:5000/v2.0/',
                help="Full URI of the OpenStack Identity API (Keystone), v2"),
     cfg.StrOpt('url',
-               default='http://localhost/',
+               default='http://192.168.56.103/',
                help="Dashboard Openstack url, v2"),
     cfg.StrOpt('strategy',
                default='keystone',
@@ -56,7 +56,7 @@ IdentityGroup = [
                help="Administrative Tenant name to use for Keystone API "
                     "requests."),
     cfg.StrOpt('admin_password',
-               default='admin',
+               default='user',
                help="API key to use when authenticating as admin.",
                secret=True),
 ]
@@ -72,9 +72,9 @@ compute_group = cfg.OptGroup(name='compute',
                              title='Compute Service Options')
 
 ComputeGroup = [
-    # cfg.BoolOpt('create_image_enabled',
-    #             default=True,
-    #             help="Does the test environment support snapshots?"),
+    cfg.BoolOpt('create_image_enabled',
+                default=True,
+                help="Does the test environment support snapshots?"),
     cfg.IntOpt('build_interval',
                default=10,
                help="Time in seconds between build status checks."),
@@ -102,17 +102,17 @@ ComputeGroup = [
                default='compute',
                help="Catalog type of the Compute service."),
     cfg.StrOpt('path_to_private_key',
-               default='/root/.ssh/id_rsa',
+               default='/home/slyopka/.ssh/id_rsa',
                help="Path to a private key file for SSH access to remote "
                     "hosts"),
     cfg.ListOpt('controller_nodes',
-                default=['', ],
+                default=['192.168.56.103', ],
                 help="IP address of one of the controller nodes"),
     cfg.StrOpt('controller_node_ssh_user',
-               default='root',
+               default='stack',
                help="ssh user of one of the controller nodes"),
     cfg.StrOpt('controller_node_ssh_password',
-               default='r00tme',
+               default='user',
                help="ssh user pass of one of the controller nodes"),
     cfg.StrOpt('image_name',
                default="TestVM",
@@ -132,16 +132,12 @@ image_group = cfg.OptGroup(name='image',
                            title="Image Service Options")
 
 ImageGroup = [
-    # cfg.StrOpt('api_version',
-    #            default='1',
-    #            help="Version of the API"),
-    # cfg.StrOpt('catalog_type',
-    #            default='image',
-    #            help='Catalog type of the Image service.'),
-    # cfg.StrOpt('http_image',
-    #            default='http://download.cirros-cloud.net/0.3.1/'
-    #            'cirros-0.3.1-x86_64-uec.tar.gz',
-    #            help='http accessable image')
+    cfg.StrOpt('api_version',
+               default='1',
+               help="Version of the API"),
+    cfg.StrOpt('catalog_type',
+               default='image',
+               help='Catalog type of the Image service.'),
 ]
 
 
@@ -159,11 +155,8 @@ NetworkGroup = [
                default='network',
                help='Catalog type of the Network service.'),
     cfg.StrOpt('tenant_network_cidr',
-               default="10.100.0.0/16",
+               default="10.13.0.0/16",
                help="The cidr block to allocate tenant networks from"),
-    # cfg.IntOpt('tenant_network_mask_bits',
-    #            default=29,
-    #            help="The mask bits for tenant networks"),
     cfg.BoolOpt('tenant_networks_reachable',
                 default=True,
                 help="Whether tenant network connectivity should be "
@@ -193,15 +186,6 @@ VolumeGroup = [
     cfg.StrOpt('catalog_type',
                default='volume',
                help="Catalog type of the Volume Service"),
-    # cfg.BoolOpt('multi_backend_enabled',
-    #             default=False,
-    #             help="Runs Cinder multi-backend test (requires 2 backends)"),
-    # cfg.StrOpt('backend1_name',
-    #            default='BACKEND_1',
-    #            help="Name of the backend1 (must be declared in cinder.conf)"),
-    # cfg.StrOpt('backend2_name',
-    #            default='BACKEND_2',
-    #            help="Name of the backend2 (must be declared in cinder.conf)"),
 ]
 
 
@@ -209,30 +193,6 @@ def register_volume_opts(conf):
     conf.register_group(volume_group)
     for opt in VolumeGroup:
         conf.register_opt(opt, group='volume')
-
-
-object_storage_group = cfg.OptGroup(name='object-storage',
-                                    title='Object Storage Service Options')
-
-ObjectStoreConfig = [
-    cfg.StrOpt('catalog_type',
-               default='object-store',
-               help="Catalog type of the Object-Storage service."),
-    # cfg.StrOpt('container_sync_timeout',
-    #            default=120,
-    #            help="Number of seconds to time on waiting for a container"
-    #                 "to container synchronization complete."),
-    # cfg.StrOpt('container_sync_interval',
-    #            default=5,
-    #            help="Number of seconds to wait while looping to check the"
-    #                 "status of a container to container synchronization"),
-]
-
-
-def register_object_storage_opts(conf):
-    conf.register_group(object_storage_group)
-    for opt in ObjectStoreConfig:
-        conf.register_opt(opt, group='object-storage')
 
 
 def process_singleton(cls):
@@ -337,7 +297,6 @@ class NailgunConfig(object):
     image = ConfigGroup(ImageGroup)
     network = ConfigGroup(NetworkGroup)
     volume = ConfigGroup(VolumeGroup)
-    object_storage = ConfigGroup(ObjectStoreConfig)
 
     def __init__(self, parse=True):
         LOG.info('INITIALIZING NAILGUN CONFIG')
