@@ -41,7 +41,8 @@ class FlavorsAdminTest(nmanager.SmokeChecksTest):
             1. Create small-size flavor.
             2. Check created flavor has expected name.
             3. Check flavor disk has expected size.
-        Duration: 1-11 s.
+        Average Duration: 6 s.
+        Max Duration: 11 s.
         """
         fail_msg = "Flavor was not created properly."
         flavor = self.verify(30, self._create_flavors, 1,

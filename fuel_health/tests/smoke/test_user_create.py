@@ -50,7 +50,8 @@ class TestUserTenantRole(nmanager.SmokeChecksTest):
             8. Check authentication was successful.
             9. Send authentication request to Horizon.
             10. Verify response status is 200.
-        Duration: 1-31 s.
+        Average Duration: 16 s.
+        Max Duration: 31 s.
         """
         # Create a tenant:
         msg_s1 = 'Tenant creation failure. '

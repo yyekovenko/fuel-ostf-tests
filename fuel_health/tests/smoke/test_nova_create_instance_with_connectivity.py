@@ -76,7 +76,8 @@ class TestNovaNetwork(nmanager.NovaNetworkScenarioTest):
 
         Scenario:
             1. Create a new keypair, check if it was created successfully.
-        Duration: 10-25 s.
+        Average Duration: 18 s.
+        Max Duration: 25 s.
         """
         self.keypairs[self.tenant_id] = self.verify(25,
                                                     self._create_keypair,
@@ -92,7 +93,8 @@ class TestNovaNetwork(nmanager.NovaNetworkScenarioTest):
 
         Scenario:
             1. Create security group, check if it was created correctly.
-        Duration: 2-25 s.
+        Average Duration: 14 s.
+        Max Duration: 25 s.
         """
         self.security_groups[self.tenant_id] = self.verify(
             25,
@@ -111,7 +113,8 @@ class TestNovaNetwork(nmanager.NovaNetworkScenarioTest):
             1. Get list of networks.
             2. Check seen network labels equal to expected ones.
             3. Check seen network ids equal to expected ones.
-        Duration: 1-50 s.
+        Average Duration: 26 s.
+        Max Duration: 50 s.
         """
         seen_nets = self.verify(
             50,
@@ -143,7 +146,8 @@ class TestNovaNetwork(nmanager.NovaNetworkScenarioTest):
             1. Create new keypair (if it`s nonexistent yet).
             2. Create new sec group (if it`s nonexistent yet).
             3. Create instance with usage of created sec group and keypair.
-        Duration: 50-150 s.
+        Average Duration: 100 s.
+        Max Duration: 150 s.
         """
         if not self.keypairs:
             self.keypairs[self.tenant_id] = self.verify(
@@ -191,7 +195,8 @@ class TestNovaNetwork(nmanager.NovaNetworkScenarioTest):
             3. Create instance with usage of created sec group and keypair.
             4. Create new floating ip.
             5. Assign floating ip to created instance.
-        Duration: 40-55 s.
+        Average Duration: 48 s.
+        Max Duration: 55 s.
         """
         if not self.servers:
             if not self.keypairs:
@@ -250,7 +255,8 @@ class TestNovaNetwork(nmanager.NovaNetworkScenarioTest):
             4. Create new floating IP.
             5. Assign new floating IP to instance.
             6. Check connectivity for all floating ips using ping command.
-        Duration: 40-55 s.
+        Average Duration: 48 s.
+        Max Duration: 55 s.
         """
         if not self.floating_ips:
             if not self.servers:
@@ -306,7 +312,8 @@ class TestNovaNetwork(nmanager.NovaNetworkScenarioTest):
             4. Create new floating IP.
             5. Assign new floating IP to instance.
             6. Ssh on instance from controller and execute ping command.
-        Duration: 40-155 s.
+        Average Duration: 98 s.
+        Max Duration: 155 s.
         """
         if not self.floating_ips:
             if not self.servers:

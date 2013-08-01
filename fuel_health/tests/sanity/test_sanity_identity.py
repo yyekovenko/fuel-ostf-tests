@@ -39,7 +39,8 @@ class ServicesTestJSON(nmanager.SanityChecksTest):
         Scenario:
             1. Request list of services.
             2. Check response.
-        Duration: 1-6 s.
+        Average Duration: 4 s.
+        Max Duration: 6 s.
         """
         fail_msg = 'Services list is unavailable. '
         services = self.verify(20, self._list_services,
@@ -58,7 +59,8 @@ class ServicesTestJSON(nmanager.SanityChecksTest):
         Scenario:
             1. Request list of users.
             2. Check response.
-        Duration: 1-6 s.
+        Average Duration: 4 s.
+        Max Duration: 6 s.
         """
         fail_msg = 'Users list is unavailable. '
         users = self.verify(20, self._list_users,

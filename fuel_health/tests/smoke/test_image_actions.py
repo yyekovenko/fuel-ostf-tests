@@ -98,7 +98,8 @@ class TestImageAction(nmanager.OfficialClientTest):
             3. Make snapshot of created server.
             4. Delete instance from step 1
             5. Boot another instance from created snapshot.
-        Duration: 80-310 s.
+        Average Duration: 195 s.
+        Max Duration: 310 s.
         """
         self.verify(25, self._add_keypair, 1,
                     "Keypair couldn`t be created.",
