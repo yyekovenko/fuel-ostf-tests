@@ -47,7 +47,7 @@ class ServicesTestJSON(nmanager.SanityChecksTest):
                                self.compute_client)
 
         self.verify_response_true(
-            len(services) >= 0, "Step 2 failed: {msg}".format(msg=fail_msg))
+            services, "Step 2 failed: {msg}".format(msg=fail_msg))
 
     @attr(type=['sanity', 'fuel'])
     def test_list_users(self):
@@ -65,5 +65,5 @@ class ServicesTestJSON(nmanager.SanityChecksTest):
                             1, fail_msg, "user listing",
                             self.identity_client)
 
-        self.verify_response_true(
-            len(users) >= 0, "Step 2 failed: {msg}".format(msg=fail_msg))
+        self.verify_response_true(users,
+                                  "Step 2 failed: {msg}".format(msg=fail_msg))
