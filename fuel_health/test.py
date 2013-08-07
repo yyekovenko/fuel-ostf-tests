@@ -19,6 +19,7 @@
 import time
 
 import testresources
+import sys
 import unittest2
 
 from fuel_health import config
@@ -126,4 +127,22 @@ class TestCase(BaseTestCase):
                                conf.compute.build_timeout,
                                conf.compute.build_interval):
             self.fail("Timed out waiting to become %s"
-                      % (expected_status))
+                      % expected_status)
+
+    # def doCleanups(self):
+    #     """Execute all cleanup functions. Normally called for you after
+    #     tearDown."""
+    #     result = self._resultForDoCleanups
+    #     ok = True
+    #     while self._cleanups:
+    #         function, args, kwargs = self._cleanups.pop(-1)
+    #         try:
+    #             function(*args, **kwargs)
+    #         except Exception as e:
+    #             if e.__class__.__name__ == 'Not Found':
+    #                 pass
+    #             else:
+    #                 LOG.debug(e)
+    #                 ok = False
+    #             result.addError(self, sys.exc_info())
+    #     return ok

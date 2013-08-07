@@ -40,6 +40,9 @@ class VolumesTest(nmanager.SmokeChecksTest):
     def tearDownClass(cls):
         super(VolumesTest, cls).tearDownClass()
 
+    def tearDown(self):
+        super(VolumesTest, self).tearDown()
+
     def _wait_for_volume_status(self, volume, status):
         self.status_timeout(self.volume_client.volumes, volume.id, status)
 

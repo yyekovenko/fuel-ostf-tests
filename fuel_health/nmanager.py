@@ -175,6 +175,7 @@ class OfficialClientTest(fuel_health.test.TestCase):
 
             flavor = cls.compute_client.flavors.create(
                 name, 64, 1, 1, flavorid)
+            # cls.addCleanup(cls.compute_client.flavors.delete, flavor)
             return flavor.id
 
     @classmethod
@@ -186,40 +187,41 @@ class OfficialClientTest(fuel_health.test.TestCase):
             cls.error_msg.append(exc)
             LOG.debug(exc)
             pass
-        while cls.os_resources:
-            thing = cls.os_resources.pop()
-            LOG.debug("Deleting %r from shared resources of %s" %
-                      (thing, cls.__name__))
 
-            try:
-                # OpenStack resources are assumed to have a delete()
-                # method which destroys the resource...
-                thing.delete()
-            except Exception as e:
-                # If the resource is already missing, mission accomplished.
-                if e.__class__.__name__ == 'NotFound':
-                    continue
-                cls.error_msg.append(e)
-                LOG.debug(e)
-
-            def is_deletion_complete():
-                # Deletion testing is only required for objects whose
-                # existence cannot be checked via retrieval.
-                if isinstance(thing, dict):
-                    return True
-                try:
-                    thing.get()
-                except Exception as e:
-                    # Clients are expected to return an exception
-                    # called 'NotFound' if retrieval fails.
-                    if e.__class__.__name__ == 'NotFound':
-                        return True
-                    cls.error_msg.append(e)
-                    LOG.debug(e)
-                return False
-
-            # Block until resource deletion has completed or timed-out
-            fuel_health.test.call_until_true(is_deletion_complete, 10, 1)
+        # while cls.os_resources:
+        #     thing = cls.os_resources.pop()
+        #     LOG.debug("Deleting %r from shared resources of %s" %
+        #               (thing, cls.__name__))
+        #
+        #     try:
+        #         # OpenStack resources are assumed to have a delete()
+        #         # method which destroys the resource...
+        #         thing.delete()
+        #     except Exception as e:
+        #         # If the resource is already missing, mission accomplished.
+        #         if e.__class__.__name__ == 'NotFound':
+        #             continue
+        #         cls.error_msg.append(e)
+        #         LOG.debug(e)
+        #
+        #     def is_deletion_complete():
+        #         # Deletion testing is only required for objects whose
+        #         # existence cannot be checked via retrieval.
+        #         if isinstance(thing, dict):
+        #             return True
+        #         try:
+        #             thing.get()
+        #         except Exception as e:
+        #             # Clients are expected to return an exception
+        #             # called 'NotFound' if retrieval fails.
+        #             if e.__class__.__name__ == 'NotFound':
+        #                 return True
+        #             cls.error_msg.append(e)
+        #             LOG.debug(e)
+        #         return False
+        #
+        #     # Block until resource deletion has completed or timed-out
+        #     fuel_health.test.call_until_true(is_deletion_complete, 10, 1)
 
 
 class NovaNetworkScenarioTest(OfficialClientTest):
@@ -273,6 +275,7 @@ class NovaNetworkScenarioTest(OfficialClientTest):
         self.verify_response_body_content(keypair.id,
                                           kp_name,
                                           'Keypair creation failed')
+        self.addCleanup(client.keypairs.delete, keypair)
         return keypair
 
     def _create_security_group(
@@ -288,6 +291,7 @@ class NovaNetworkScenarioTest(OfficialClientTest):
         self.verify_response_body_content(secgroup.description,
                                           sg_desc,
                                           "Security group creation failed")
+        self.addCleanup(self.compute_client.security_groups.delete, secgroup)
 
 
         # Add rules to the security group
@@ -314,9 +318,10 @@ class NovaNetworkScenarioTest(OfficialClientTest):
         ]
         for ruleset in rulesets:
             try:
-               client.security_group_rules.create(secgroup.id, **ruleset)
+                client.security_group_rules.create(secgroup.id, **ruleset)
             except Exception:
                 self.fail("Failed to create rule in security group.")
+        self.addCleanup(self.compute_client.security_group_rules.delete, secgroup.id)
 
         return secgroup
 
@@ -330,6 +335,7 @@ class NovaNetworkScenarioTest(OfficialClientTest):
         self.verify_response_body_content(networks.label,
                                           n_label,
                                           "Network creation failed")
+        self.addCleanup(self.compute_client.networks.delete, networks)
         return networks
 
     @classmethod
@@ -354,6 +360,7 @@ class NovaNetworkScenarioTest(OfficialClientTest):
         self._create_nano_flavor()
         server = client.servers.create(name, base_image_id, 42,
                                        **create_kwargs)
+        self.addCleanup(self.compute_client.servers.delete, server.id)
         self.verify_response_body_content(server.name,
                                           name,
                                           "Instance creation failed")
@@ -374,6 +381,7 @@ class NovaNetworkScenarioTest(OfficialClientTest):
                 pool=floating_ips_pool[0].name)
 
             self.floating_ips.append(floating_ip)
+            self.add_cleanup(self.compute_client.floating_ips.delete, floating_ip)
             return floating_ip
         else:
             self.fail('No available floating IP found')
@@ -481,8 +489,8 @@ class NovaNetworkScenarioTest(OfficialClientTest):
     @classmethod
     def tearDownClass(cls):
         super(NovaNetworkScenarioTest, cls).tearDownClass()
-        cls._clean_floating_is()
-        cls._clear_networks()
+        # cls._clean_floating_is()
+        # cls._clear_networks()
         cls._verification_of_exceptions()
 
 
@@ -611,6 +619,7 @@ class SmokeChecksTest(OfficialClientTest):
         name = rand_name('ost1_test-flavor-')
         flavorid = rand_int_id()
         flavor = client.flavors.create(name, ram, disk, vcpus, flavorid)
+        self.addCleanup(client.flavors.delete, flavor)
         self.flavors.append(flavor)
         return flavor
 
@@ -628,6 +637,7 @@ class SmokeChecksTest(OfficialClientTest):
     def _create_tenant(self, client):
         name = rand_name('ost1_test-tenant-')
         tenant = client.tenants.create(name)
+        self.addCleanup(self.identity_client.tenants.delete, tenant)
         self.tenants.append(tenant)
         return tenant
 
@@ -647,6 +657,7 @@ class SmokeChecksTest(OfficialClientTest):
         email = "test@test.com"
         name = rand_name('ost1_test-user-')
         user = client.users.create(name, password, email, tenant_id)
+        self.addCleanup(self.identity_client.users.delete, user)
         self.users.append(user)
         return user
 
@@ -664,6 +675,7 @@ class SmokeChecksTest(OfficialClientTest):
     def _create_role(self, client):
         name = rand_name('ost1_test-role-')
         role = client.roles.create(name)
+        self.addCleanup(self.identity_client.roles.delete, role)
         self.roles.append(role)
         return role
 
@@ -682,6 +694,10 @@ class SmokeChecksTest(OfficialClientTest):
         display_name = rand_name('ost1_test-volume')
         volume = client.volumes.create(size=1, display_name=display_name)
         self.set_resource(display_name, volume)
+        try:
+            self.addCleanup(self.volume_client.volumes.delete, volume)
+        except Exception as e:
+            LOG.debug(e)
         self.volumes.append(volume)
         return volume
 
@@ -704,6 +720,7 @@ class SmokeChecksTest(OfficialClientTest):
         base_image_id = get_image_from_name()
         flavor_id = self._create_nano_flavor()
         server = client.servers.create(name, base_image_id, flavor_id)
+        self.addCleanup(self.compute_client.servers.delete, server)
         self.set_resource(name, server)
         self.verify_response_body_content(server.name,
                                           name,
@@ -747,9 +764,9 @@ class SmokeChecksTest(OfficialClientTest):
     @classmethod
     def tearDownClass(cls):
         super(SmokeChecksTest, cls).tearDownClass()
-        cls._clean_flavors()
-        cls._clean_tenants()
-        cls._clean_users()
-        cls._clean_roles()
-        cls._clean_volumes()
+        # cls._clean_flavors()
+        # cls._clean_tenants()
+        # cls._clean_users()
+        # cls._clean_roles()
+        # cls._clean_volumes()
         cls._verification_of_exceptions()
