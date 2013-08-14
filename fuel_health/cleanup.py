@@ -29,6 +29,14 @@ import glanceclient.client
 import keystoneclient.v2_0.client
 import novaclient.client
 
+try:
+
+    from quantumclient.common import exceptions as exc
+    import quantumclient.v2_0.client
+
+except ImportError:
+    pass
+
 
 from fuel_health import exceptions
 import fuel_health.manager
@@ -135,6 +143,28 @@ class CleanUpClientManager(fuel_health.manager.Manager):
                                                  tenant_name=tenant_name,
                                                  auth_url=auth_url,
                                                  insecure=dscv)
+
+    def _get_network_client(self):
+        username = self.config.identity.admin_username
+        password = self.config.identity.admin_password
+        tenant_name = self.config.identity.admin_tenant_name
+
+        if None in (username, password, tenant_name):
+            msg = ("Missing required credentials for network client. "
+                   "username: %(username)s, password: %(password)s, "
+                   "tenant_name: %(tenant_name)s") % locals()
+            raise exceptions.InvalidConfiguration(msg)
+
+        auth_url = self.config.identity.uri
+        dscv = self.config.identity.disable_ssl_certificate_validation
+        try:
+            return quantumclient.v2_0.client.Client(username=username,
+                                                    password=password,
+                                                    tenant_name=tenant_name,
+                                                    auth_url=auth_url,
+                                                    insecure=dscv)
+        except BaseException:
+            return
 
     def wait_for_server_termination(self, server, ignore_error=False):
         """Waits for server to reach termination."""
