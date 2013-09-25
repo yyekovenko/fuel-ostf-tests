@@ -20,6 +20,7 @@ import select
 import socket
 import time
 import warnings
+import cStringIO
 
 from fuel_health import exceptions
 
@@ -100,7 +101,7 @@ class Client(object):
         except (EOFError, paramiko.AuthenticationException, socket.error):
             return
 
-    def exec_command(self, cmd):
+    def exec_command(self, command):
         """
         Execute the specified command on the server.
 
@@ -113,68 +114,19 @@ class Client(object):
         """
         ssh = self._get_ssh_connection()
         transport = ssh.get_transport()
-        channel = transport.open_session()
-        channel.get_pty()
-        channel.fileno()  # Register event pipe
-        channel.exec_command(cmd)
-        channel.shutdown_write()
-        out_data = []
-        err_data = []
+        return self._exec_command(command, transport)
 
-        select_params = [channel], [], [], self.channel_timeout
-        while True:
-            ready = select.select(*select_params)
-            if not any(ready):
-                raise exceptions.TimeoutException(
-                    "Command: '{0}' executed on host '{1}'.".format(
-                        cmd, self.host))
-            if not ready[0]:        # If there is nothing to read.
-                continue
-            out_chunk = err_chunk = None
-            if channel.recv_ready():
-                out_chunk = channel.recv(self.buf_size)
-                out_data += out_chunk,
-            if channel.recv_stderr_ready():
-                err_chunk = channel.recv_stderr(self.buf_size)
-                err_data += err_chunk,
-            if channel.closed and not err_chunk and not out_chunk:
-                break
-        exit_status = channel.recv_exit_status()
-        if 0 != exit_status:
-            raise exceptions.SSHExecCommandFailed(
-                command=cmd, exit_status=exit_status,
-                strerror=''.join(err_data).join(out_data))
-        return ''.join(out_data)
-
-    def test_connection_auth(self):
-        """Returns true if ssh can connect to server."""
-        try:
-            connection = self._get_ssh_connection()
-            connection.close()
-        except paramiko.AuthenticationException:
-            return False
-
-        return True
-
-    def exec_command_on_vm(self, command, user, password, vm):
-        """Execute the specified command on the instance.
-
-        Note that this method is reading whole command outputs to memory, thus
-        shouldn't be used for large outputs.
+    def _exec_command(self, command, transport):
+        """
+        Execute the specified command within specified session (SSH transport).
 
         :returns: data read from standard output of the command.
         :raises: SSHExecCommandFailed if command returns nonzero
-            status. The exception contains command status stderr content."""
-        ssh = self._get_ssh_connection()
-        _intermediate_transport = ssh.get_transport()
-        _intermediate_channel = \
-            _intermediate_transport.open_channel('direct-tcpip',
-                                                 (vm, 22),
-                                                 (self.host, 0))
-        transport = paramiko.Transport(_intermediate_channel)
-        transport.start_client()
-        transport.auth_password(user, password)
+                 status. The exception contains command status stderr content.
+        """
         channel = transport.open_session()
+        channel.get_pty()
+        channel.fileno()  # Register event pipe
         channel.exec_command(command)
         exit_status = channel.recv_exit_status()
         channel.shutdown_write()
@@ -204,6 +156,55 @@ class Client(object):
                 command=command, exit_status=exit_status,
                 strerror=''.join(err_data).join(out_data))
         return ''.join(out_data)
+
+    def test_connection_auth(self):
+        """Returns true if ssh can connect to server."""
+        try:
+            connection = self._get_ssh_connection()
+            connection.close()
+        except paramiko.AuthenticationException:
+            return False
+
+        return True
+
+    def exec_command_on_vm(self, command, vm, user,
+                           password=None, pkey=None):
+        """
+        Execute the specified command on the instance.
+
+        Note that this method is reading whole command outputs to memory, thus
+        shouldn't be used for large outputs.
+
+        :params command: Command to be executed on instance.
+        :params vm: IP address of the instance.
+        :params user: User name for log-in to the instance.
+        :params password: Password for user, optional, pkey can be used instead.
+        :params pkey: Path to private key file on server node, optional.
+        :returns: data read from standard output of the command.
+        :raises: SSHExecCommandFailed if command returns nonzero
+            status. The exception contains command status stderr content.
+        """
+
+        ssh = self._get_ssh_connection()
+        _intermediate_transport = ssh.get_transport()
+        _intermediate_channel = _intermediate_transport.open_channel(
+            'direct-tcpip',
+            (vm, 22), (self.host, 0))
+        transport = paramiko.Transport(_intermediate_channel)
+        transport.start_client()
+
+        if password is not None:
+            transport.auth_password(user, password)
+        elif pkey is not None:
+            if isinstance(pkey, basestring):
+                # get text of private key file
+                ptext = self._exec_command('cat %s' % pkey,
+                                           _intermediate_transport)
+                pkey = paramiko.RSAKey.from_private_key(
+                    cStringIO.StringIO(ptext))
+            transport.auth_publickey(user, pkey)
+
+        return self._exec_command(command, transport)
 
     def close_ssh_connection(self, connection):
         connection.close()

@@ -17,11 +17,14 @@
 #    under the License.
 
 import logging
+import os
+import time
 
 import heatclient.v1.client
 
+from fuel_health.common.ssh import Client as SSHClient
 from fuel_health.common.utils.data_utils import rand_name
-from fuel_health import config
+from fuel_health.exceptions import SSHExecCommandFailed
 import fuel_health.nmanager
 import fuel_health.test
 
@@ -105,6 +108,7 @@ class HeatBaseTest(fuel_health.nmanager.OfficialClientTest):
         super(HeatBaseTest, cls).setUpClass()
         cls.stacks = []
         cls.flavor = None
+
         cls.wait_interval = cls.config.compute.build_interval
         cls.wait_timeout = cls.config.compute.build_timeout
 
@@ -146,16 +150,21 @@ class HeatBaseTest(fuel_health.nmanager.OfficialClientTest):
                 return stack
         return None
 
-    def create_stack(self, client):
+    def create_stack(self, client, template=None, parameters={}):
         stack_name = rand_name('ost1_test-stack')
         self._prepare_stack_resources()
 
+        if template is None:
+            template = self.simple_template
+
+        if 'InstanceType' not in parameters:
+            parameters['InstanceType'] = self.flavor.name
+        if 'ImageId' not in parameters:
+            parameters['ImageId'] = self.config.compute.image_name
+
         client.stacks.create(stack_name=stack_name,
-                             template=self.simple_template,
-                             parameters={
-                                 'ImageId': self.config.compute.image_name,
-                                 'InstanceType': self.flavor.name
-                             })
+                             template=template,
+                             parameters=parameters)
         # heat client doesn't return stack details after creation
         # so need to request them:
         stack = self.find_stack(client, 'stack_name', stack_name)
@@ -193,7 +202,6 @@ class HeatBaseTest(fuel_health.nmanager.OfficialClientTest):
                       "Currently in %s status",
                       stack, expected_status, new_status)
 
-        conf = config.FuelConfig()
         if not fuel_health.test.call_until_true(check_status,
                                                 self.wait_timeout,
                                                 self.wait_interval):
@@ -206,3 +214,57 @@ class HeatBaseTest(fuel_health.nmanager.OfficialClientTest):
                                                 self.wait_timeout,
                                                 self.wait_interval):
             self.fail("Timed out waiting for stack to be deleted.")
+
+    def is_haproxy_active_on_vm(self, vm_ip, vm_user, vm_key):
+        """
+        Check if haproxy service is active on the specified instance.
+
+        :params vm_ip: Floating ip of target virtual machine.
+        :params vm_user: User name to login to VM.
+        :params vm_key: Path to private key file on controller node.
+        """
+
+        CMD = '/etc/init.d/haproxy status'
+        # TODO hook for local run
+        self.key = "/home/yyekovenko/.ssh/id_rsa"
+
+        if not self.host:
+            self.fail('Wrong tests configuration: '
+                      'controller_nodes parameter is empty ')
+        host = self.host[0]
+        ssh_timeout = self.timeout > 30 and self.timeout or 30
+        ssh = SSHClient(host, self.usr, password=self.pwd,
+                        key_filename=self.key, timeout=ssh_timeout)
+
+        attempts = 10
+        while True:
+            time.sleep(15)
+            try:
+                result = ssh.exec_command_on_vm(command=CMD,
+                                                user=vm_user,
+                                                pkey=vm_key,
+                                                vm=vm_ip)
+                LOG.debug('Get ssh to instance and run command there')
+                return "active (running)" in result
+
+            except SSHExecCommandFailed as exc:
+                output_msg = "Running of %s command on %s machine failed." % (
+                    CMD, vm_ip)
+                LOG.debug(exc)
+                if attempts:
+                    attempts -= 1
+                else:
+                    self.fail(output_msg)
+
+            except Exception as exc:
+                LOG.debug(exc)
+                self.fail("Connection failed.")
+
+    def load_template(self, base_file, file_name):
+        filepath = os.path.join(os.path.dirname(os.path.realpath(base_file)),
+                                file_name)
+        with open(filepath) as f:
+            return f.read()
+
+    def is_keypair_available(self, keyname):
+        return keyname in [k.id for k in self.compute_client.keypairs.list()]

@@ -161,6 +161,17 @@ class OfficialClientTest(fuel_health.test.TestCase):
     manager_class = OfficialClientManager
 
     @classmethod
+    def setUpClass(cls):
+        super(OfficialClientTest, cls).setUpClass()
+        cls.host = cls.config.compute.controller_nodes
+        cls.usr = cls.config.compute.controller_node_ssh_user
+        cls.pwd = cls.config.compute.controller_node_ssh_password
+        cls.key = cls.config.compute.path_to_private_key
+        cls.timeout = cls.config.compute.ssh_timeout
+
+        cls.floating_ips = []
+
+    @classmethod
     def _create_nano_flavor(cls):
         name = rand_name('ost1_test-flavor-nano')
         flavorid = 42
@@ -179,6 +190,8 @@ class OfficialClientTest(fuel_health.test.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.error_msg = []
+        cls._clean_floating_ips()
+
         try:
             cls.compute_client.flavors.delete('42')
         except Exception as exc:
@@ -220,6 +233,34 @@ class OfficialClientTest(fuel_health.test.TestCase):
             # Block until resource deletion has completed or timed-out
             fuel_health.test.call_until_true(is_deletion_complete, 10, 1)
 
+    def _create_floating_ip(self):
+        floating_ips_pool = self.compute_client.floating_ip_pools.list()
+
+        if floating_ips_pool:
+            floating_ip = self.compute_client.floating_ips.create(
+                pool=floating_ips_pool[0].name)
+
+            self.floating_ips.append(floating_ip)
+            return floating_ip
+        else:
+            self.fail('No available floating IP found')
+
+    def _assign_floating_ip_to_instance(self, client, server, floating_ip):
+        try:
+            client.servers.add_floating_ip(server, floating_ip)
+        except Exception:
+            self.fail('Can not assign floating ip to instance')
+
+    @classmethod
+    def _clean_floating_ips(cls):
+        for ip in cls.floating_ips:
+            try:
+                cls.compute_client.floating_ips.delete(ip)
+            except Exception as exc:
+                cls.error_msg.append(exc)
+                LOG.debug(exc)
+                pass
+
 
 class NovaNetworkScenarioTest(OfficialClientTest):
     """
@@ -250,17 +291,11 @@ class NovaNetworkScenarioTest(OfficialClientTest):
     @classmethod
     def setUpClass(cls):
         super(NovaNetworkScenarioTest, cls).setUpClass()
-        cls.host = cls.config.compute.controller_nodes
-        cls.usr = cls.config.compute.controller_node_ssh_user
-        cls.pwd = cls.config.compute.controller_node_ssh_password
-        cls.key = cls.config.compute.path_to_private_key
-        cls.timeout = cls.config.compute.ssh_timeout
         cls.tenant_id = cls.manager._get_identity_client(
             cls.config.identity.admin_username,
             cls.config.identity.admin_password,
             cls.config.identity.admin_tenant_name).tenant_id
         cls.network = []
-        cls.floating_ips = []
         cls.sec_group = []
         cls.error_msg = []
 
@@ -363,34 +398,6 @@ class NovaNetworkScenarioTest(OfficialClientTest):
         self.set_resource(name, server)
         return server
 
-    def _create_floating_ip(self):
-        floating_ips_pool = self.compute_client.floating_ip_pools.list()
-
-        if floating_ips_pool:
-            floating_ip = self.compute_client.floating_ips.create(
-                pool=floating_ips_pool[0].name)
-
-            self.floating_ips.append(floating_ip)
-            return floating_ip
-        else:
-            self.fail('No available floating IP found')
-
-    def _assign_floating_ip_to_instance(self, client, server, floating_ip):
-        try:
-            client.servers.add_floating_ip(server, floating_ip)
-        except Exception:
-            self.fail('Can not assign floating ip to instance')
-
-    @classmethod
-    def _clean_floating_is(cls):
-        for ip in cls.floating_ips:
-            try:
-                cls.compute_client.floating_ips.delete(ip)
-            except Exception as exc:
-                cls.error_msg.append(exc)
-                LOG.debug(exc)
-                pass
-
     def _ping_ip_address(self, ip_address):
         def ping():
             cmd = 'ping -c1 -w1 ' + ip_address
@@ -482,7 +489,6 @@ class NovaNetworkScenarioTest(OfficialClientTest):
     @classmethod
     def tearDownClass(cls):
         super(NovaNetworkScenarioTest, cls).tearDownClass()
-        cls._clean_floating_is()
         cls._clear_networks()
         cls._verification_of_exceptions()
 
